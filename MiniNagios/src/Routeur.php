@@ -7,7 +7,8 @@ class Routeur extends EquipementReseau
 
     public function __construct(string $hostname, string $ip, int $nbPorts)
     {
-        parent::__construct($hostname, $ip);
+        if ($nbPorts)
+            parent::__construct($hostname, $ip);
         $this->nbPorts = $nbPorts;
     }
 

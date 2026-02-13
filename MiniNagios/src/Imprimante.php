@@ -2,26 +2,26 @@
 
 namespace App;
 
-class Imprimante
+class Imprimante extends EquipementReseau
 {
     private string $type;
     private bool $estCouleur;
 
-    public function __construct(string $hostname, string $ip)
+    public function __construct(string $hostname, string $ip, string $type, bool $estCouleur)
     {
-        $this->hostname = $hostname;
-        $this->ip = $ip;
-    }
+        if (!Validator::isHostnameValid($ip)) {
+            throw new \Exception("Le hostname '$hostname' est invalide (pas d'espaces, pas d'accents).");
 
-    public function  __construct1(string $type, bool $estCouleur)
-    {
-        $this->type = $type;
-        $this->estCouleur = $estCouleur;
+            parent::__construct($ip, $hostname);
+            $this->type = $type;
+            $this->estCouleur = $estCouleur;
+        }
     }
 
     public function afficherStatut(): String
     {
-        return "Équipement : $this->hostname ($this->ip) $this->type $this->estCouleur";
+        $couleurTexte = $this->estCouleur ? "OUI" : "NON";
+        return "Équipement : {$this->hostname} ({$this->ip}) | Type : {$this->type} | Couleur : {$couleurTexte}";
     }
 
 }

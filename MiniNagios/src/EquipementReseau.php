@@ -14,6 +14,10 @@ class EquipementReseau
     // Pas de setter ! Un équipement DOIT avoir une IP dès sa naissance.
     public function __construct(string $hostname, string $ip)
     {
+        if (!Validator::isHostnameValid($hostname)) {
+            throw new \Exception("Le hostname '$hostname' est invalide (pas d'espaces, pas d'accents).");
+        }
+
         $this->hostname = $hostname;
         $this->ip = $ip;
     }
