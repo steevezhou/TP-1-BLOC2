@@ -18,15 +18,25 @@ class Validator
         }
     }
 
+    /**
+     * Vérifie si une chaîne ressemble à un nom d'hôte.
+     * Cette méthode est STATIQUE (mot clé static).
+     * On l'appelle directement par la Classe, pas par un objet.
+     */
     public static function isHostnameValid(string $hostname): bool
     {
-        // preg_match retourne 1 si ça match, 0 sinon
-        return preg_match('/^[a-zA-Z0-0-]+$/', $hostname);
+        return preg_match('/^[a-zA-Z0-9-]+$/',$hostname);
     }
+public static function isPrinterTypeValid(string $type): bool{
+        $imprimanteVerif=["Laser", "Jet d’encre", "Thermique", "Matricielle"];
+        return in_array($type,$imprimanteVerif);
 
-    public static function isPrinterTypeValid(string $type): bool
-    {
-        $imprimanteVerif = ["Laser", "Jet d’encre", "Thermique", "Matricielle"];
-        return in_array($type, $imprimanteVerif);
-    }
 }
+
+    public static function isOsSupported(string $os): bool {
+        $listeOS=["Debian 12", "Ubuntu 24.04", "Windows Server 2022", "RedHat 9"];
+        return in_array($os,$listeOS);
+}
+}
+
+
