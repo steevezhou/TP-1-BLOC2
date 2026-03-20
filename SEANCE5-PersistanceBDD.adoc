@@ -26,6 +26,7 @@ Pour communiquer avec MySQL, PHP propose une extension orientée objet très pui
 == Préparation de la Base de Données
 
 Avant de coder, préparons notre stockage.
+
 1. Lancez votre serveur MySQL (via Laragon. En stage, dans l'entreprise cela pourrait également être XAMPP ou Docker).
 2. Ouvrez votre outil de gestion (HeidiSQL ici, phpMyAdmin ou DBeaver dans un autre contexte...).
 3. Exécutez le script SQL suivant pour créer la table :
