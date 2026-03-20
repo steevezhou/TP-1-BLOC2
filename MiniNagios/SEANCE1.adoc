@@ -1,0 +1,417 @@
+= SÉANCE 1 : POO & Infrastructure - Le Projet "Mini-Nagios"
+:author: Timothée Robert et les IA
+:toc: left
+:toc-title: Sommaire
+:icons: font
+:source-highlighter: highlightjs
+:imagesdir: images
+
+
+== Partie 0 : Les Concepts Clés (Cours Interactif)
+
+Avant de nous lancer dans le projet d'infrastructure, prenons 20 minutes pour comprendre les "Lego" que nous allons utiliser.
+
+=== 0.1. Le Problème du Procédural
+Imaginez que vous deviez gérer une voiture en code. En procédural (ce que vous faisiez avant), cela ressemble à ça :
+
+[source,php]
+----
+$marque_voiture1 = "Peugeot";
+$couleur_voiture1 = "Rouge";
+$vitesse_voiture1 = 0;
+
+function accelerer($vitesse_actuelle) {
+    return $vitesse_actuelle + 10;
+}
+----
+
+*Problème :* Si vous avez 100 voitures, vous aurez 300 variables ($marque_voiture99...). C'est le chaos.
+
+=== 0.2. La solution Objet : Le Moule et le Gâteau
+La POO repose sur deux concepts fondamentaux : la **Classe** et l'**Objet**.
+
+[mermaid]
+....
+graph TD
+    Class[CLASSE <br> <i>Le Plan Architecte</i>]
+    Class -->|new Voiture| Obj1(OBJET 1 <br> <i>Peugeot Rouge</i>)
+    Class -->|new Voiture| Obj2(OBJET 2 <br> <i>Ferrari Jaune</i>)
+
+    style Class fill:#f96,stroke:#333,stroke-width:4px,color:white
+    style Obj1 fill:#9cf,stroke:#333,stroke-width:2px
+    style Obj2 fill:#9cf,stroke:#333,stroke-width:2px
+....
+
+* **La Classe (Le Plan)** : C'est le modèle abstrait. Elle définit ce qu'est une voiture (elle a une couleur, elle peut rouler). Elle n'existe pas physiquement.
+* **L'Objet (L'Instance)** : C'est la voiture concrète (La Peugeot Rouge de M. Dupont). On peut créer une infinité d'objets à partir d'une seule classe.
+
+[TIP]
+====
+**À VOUS DE JOUER :** Créez un fichier `test_concept.php` et testez ce code :
+====
+
+[source,php]
+----
+<?php
+// 1. DÉFINITION DU PLAN (CLASSE)
+class Voiture {
+    public $couleur; // Attribut (Caractéristique)
+
+    public function klaxonner() { // Méthode (Action)
+        echo "Tut tut ! Je suis une voiture " . $this->couleur . "<br>";
+    }
+}
+
+// 2. CRÉATION DES OBJETS (INSTANCIATION)
+$peugeot = new Voiture(); // On crée une instance
+$peugeot->couleur = "Rouge";
+
+$ferrari = new Voiture(); // On crée une autre instance
+$ferrari->couleur = "Jaune";
+
+// 3. UTILISATION
+$peugeot->klaxonner(); // Affiche : Tut tut ! Je suis une voiture Rouge
+$ferrari->klaxonner(); // Affiche : Tut tut ! Je suis une voiture Jaune
+----
+
+=== 0.3. L'Encapsulation : La Boîte Noire
+En informatique, on n'aime pas que n'importe qui touche aux câbles.
+Imaginez votre smartphone : vous utilisez l'écran (Public), mais vous ne pouvez pas toucher directement le processeur ou la batterie (Private). C'est l'**Encapsulation**.
+
+* `public` : Accessible de partout (L'écran tactile).
+* `private` : Accessible uniquement DANS la classe (La batterie interne).
+* `protected` : Accessible dans la classe et ses héritiers (Le BIOS).
+
+[WARNING]
+====
+**TESTEZ CECI :** Essayez d'accéder à une propriété privée.
+====
+
+[source,php]
+----
+<?php
+class CompteBancaire {
+    private $solde = 1000; // Privé ! Personne ne doit le modifier directement
+
+    public function retirerArgent($montant) {
+        if ($montant <= $this->solde) {
+            $this->solde -= $montant;
+            echo "Retrait OK. Nouveau solde : " . $this->solde;
+        } else {
+            echo "Erreur : Fonds insuffisants !";
+        }
+    }
+}
+
+$compte = new CompteBancaire();
+// $compte->solde = 5000000; // ERREUR FATALE ! Impossible d'accéder à une propriété privée
+$compte->retirerArgent(100); // OK, on passe par la porte d'entrée officielle (Méthode publique)
+----
+
+=== 0.4. L'Héritage : Ne pas se répéter (DRY)
+C'est la puissance ultime de la POO.
+Un "Camion" est un "Véhicule". Une "Moto" est un "Véhicule".
+Pourquoi recoder la méthode `demarrer()` pour chacun ?
+
+.Diagramme UML (Représentation visuelle)
+[mermaid]
+....
+classDiagram
+    class Vehicule {
+        +demarrer()
+        +arreter()
+    }
+    class Moto {
+        +faireUnWheeling()
+    }
+    class Camion {
+        +attacherRemorque()
+    }
+    Vehicule <|-- Moto
+    Vehicule <|-- Camion
+....
+
+[source,php]
+----
+<?php
+class Vehicule {
+    public function demarrer() {
+        echo "Vroum ! Le moteur tourne.<br>";
+    }
+}
+
+class Moto extends Vehicule { // "extends" = Hérite de
+    public function faireWheeling() {
+        echo "La moto se lève sur la roue arrière !<br>";
+    }
+}
+
+$maMoto = new Moto();
+$maMoto->demarrer();      // Fonctionne ! (Hérité du parent)
+$maMoto->faireWheeling(); // Fonctionne ! (Spécifique à la moto)
+----
+
+*Maintenant que vous avez les bases, passons aux choses sérieuses : Construisons notre infrastructure réseau.*
+
+
+== 1. Contexte et Objectifs
+
+=== 1.1. Pourquoi la POO pour un DevOps ?
+Jusqu'ici, nous avons codé en **procédural** (une suite d'instructions linéaires). C'est fonctionnel pour des petits scripts, mais ingérable pour de gros systèmes.
+
+La **POO (Programmation Orientée Objet)** est un paradigme qui permet de modéliser le code comme des objets du monde réel.
+Pour un profil SLAM/DevOps, c'est l'arme absolue :
+
+* **Modularité :** Chaque équipement (Routeur, Serveur) est isolé dans son propre fichier.
+* **Réutilisabilité :** On crée un modèle de "Serveur" une fois, et on l'utilise pour déployer 1000 instances.
+* **Sécurité :** On protège les données sensibles (IP, mots de passe) grâce à l'encapsulation.
+
+=== 1.2. Le Projet Fil Rouge : "Mini-Nagios"
+Vous êtes chargés de développer le cœur d'un outil de supervision (type Nagios ou Zabbix).
+Votre mission aujourd'hui :
+
+.   Mettre en place un environnement professionnel (Composer & Autoloading).
+.   Modéliser les équipements du réseau (Serveurs, Routeurs).
+.   Créer un script de démarrage qui simule le parc informatique.
+
+== 2. Environnement & Autoloading
+
+[IMPORTANT]
+====
+En développement moderne, on n'utilise **jamais** de `include` ou `require` manuels pour charger nos classes. C'est la source de trop d'erreurs. Nous allons utiliser **Composer** pour gérer le chargement automatique (Autoloading).
+====
+
+=== 2.1. Initialisation du projet
+.   Créez un dossier nommé `MiniNagios`.
+.   À la racine, créez l'arborescence suivante :
+* `/src` : C'est ici que vivront vos Classes (votre code intelligent).
+* `/public` : C'est ici que sera votre point d'entrée (le fichier que l'on exécute).
+
+=== 2.2. Configuration de l'Autoloading (PSR-4)
+À la racine du projet, créez un fichier `composer.json` avec ce contenu :
+
+[source,json]
+----
+{
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    }
+}
+----
+
+Cela signifie : *"Toutes les classes qui commencent par le namespace `App\` se trouvent physiquement dans le dossier `src/`"*.
+
+Ouvrez un terminal dans le dossier `MiniNagios` et lancez la commande pour générer l'autoloader :
+[source,bash]
+----
+composer dump-autoload
+----
+_Si composer n'est pas reconnu, modifiez l'environnement pour l'ajouter dans le PATH ou bien téléchargez `composer.phar` ou encore utilisez l'installateur Windows ou mieux demander à mr Robert de vous le faire sur votre poste_
+
+== 3. La Classe Mère : Modéliser le Réseau
+
+Nous allons définir ce qu'est un équipement réseau générique.
+
+=== 3.1. Création de la Classe
+Dans le dossier `src`, créez un fichier `EquipementReseau.php`.
+
+[source,php]
+----
+<?php
+namespace App; // On déclare que cette classe appartient à l'espace de nom "App"
+
+class EquipementReseau
+{
+    // ATTRIBUTS : Les caractéristiques de l'objet
+    // Visibilité "protected" : accessible par la classe elle-même ET ses enfants (héritage)
+    // Nous n'utilisons pas "public" pour respecter l'ENCAPSULATION.
+    protected string $hostname;
+    protected string $ip;
+
+    // CONSTRUCTEUR : La méthode appelée automatiquement à la création (new)
+    // C'est ici qu'on force la cohérence de l'objet.
+    // Pas de setter ! Un équipement DOIT avoir une IP dès sa naissance.
+    public function __construct(string $hostname, string $ip)
+    {
+        $this->hostname = $hostname;
+        $this->ip = $ip;
+    }
+
+    // MÉTHODE : Une action que l'objet peut faire
+    public function afficherStatut(): string
+    {
+        return "Équipement : $this->hostname ($this->ip)";
+    }
+}
+----
+
+**Analyse du code :**
+
+* **Namespace :** `namespace App;` permet à l'autoloader de retrouver le fichier.
+* **Protected :** Contrairement à `private` (accessible uniquement par la classe elle-même), `protected` permettra aux futures classes `Serveur` et `Routeur` d'accéder à `$ip`.
+* **Pas de Setters :** C'est un **Anti-Pattern**. Si on veut changer l'IP, on créera une méthode métier explicite (`changerIp()`) plus tard. On ne laisse pas modifier les attributs n'importe comment.
+
+== 4. Spécialisation : L'Héritage
+
+Un réseau n'est pas fait juste d'"équipements". Il est fait de Serveurs et de Routeurs.
+
+=== 4.1. La Classe Serveur
+Créez le fichier `src/Serveur.php`.
+Un serveur EST UN équipement réseau, mais il a en plus un **Système d'Exploitation (OS)**.
+
+[source,php]
+----
+<?php
+namespace App;
+
+// "extends" signifie que Serveur hérite de tout ce que possède EquipementReseau
+class Serveur extends EquipementReseau
+{
+    private string $os; // Attribut spécifique au Serveur
+
+    public function __construct(string $hostname, string $ip, string $os)
+    {
+        // On appelle d'abord le constructeur du parent pour gérer IP et Hostname
+        parent::__construct($hostname, $ip);
+
+        // Puis on gère la spécificité du Serveur
+        $this->os = $os;
+    }
+
+    // On surcharge (réécrit) la méthode d'affichage pour ajouter l'OS
+    public function afficherStatut(): string
+    {
+        // On récupère le texte du parent et on ajoute l'OS
+        return parent::afficherStatut() . " | OS : $this->os";
+    }
+}
+----
+
+=== 4.2. La Classe Routeur
+Créez le fichier `src/Routeur.php`.
+Un routeur n'a pas forcément d'OS pertinent ici, mais il a un **nombre de ports**.
+
+[source,php]
+----
+<?php
+namespace App;
+
+class Routeur extends EquipementReseau
+{
+    private int $nbPorts;
+
+    public function __construct(string $hostname, string $ip, int $nbPorts)
+    {
+        parent::__construct($hostname, $ip);
+        $this->nbPorts = $nbPorts;
+    }
+
+    public function afficherStatut(): string
+    {
+        return parent::afficherStatut() . " | Ports : $this->nbPorts";
+    }
+}
+----
+
+== 5. Mise en Service : Le Script Principal
+
+C'est l'heure de tester. Nous allons créer le fichier qui va utiliser nos classes.
+Créez le fichier `public/index.php`.
+
+[source,php]
+----
+<?php
+// 1. Chargement automatique des classes (Grâce à Composer)
+require '../vendor/autoload.php';
+
+// 2. Importation des classes qu'on veut utiliser
+use App\Serveur;
+use App\Routeur;
+
+// 3. Instanciation des objets
+// On crée des objets concrets avec le mot clé "new"
+$monServeurWeb = new Serveur("SRV-WEB-01", "192.168.1.10", "Debian 12");
+$monServeurAD  = new Serveur("SRV-AD-01", "192.168.1.11", "Windows Server 2022");
+$monRouteur    = new Routeur("RTR-CORE", "10.0.0.1", 24);
+
+// 4. Utilisation des objets
+echo "<h1>Tableau de bord Mini-Nagios</h1>";
+
+echo "<p>" . $monServeurWeb->afficherStatut() . "</p>";
+echo "<p>" . $monServeurAD->afficherStatut() . "</p>";
+echo "<p>" . $monRouteur->afficherStatut() . "</p>";
+
+// Debug pour voir la structure réelle de l'objet
+echo "<pre>";
+var_dump($monServeurWeb);
+echo "</pre>";
+----
+
+== 6. Exécution et Test
+
+1.  Ouvrez un terminal.
+2.  Placez-vous dans le dossier `public`.
+3.  Lancez un serveur PHP interne :
+`php -S localhost:8000`
+4.  Ouvrez votre navigateur sur `http://localhost:8000`.
+
+Vous devriez voir vos équipements s'afficher.
+
+== Résumé des notions vues
+
+* **Classe vs Objet :** La classe est le moule (`Serveur`), l'objet est le résultat concret (`SRV-WEB-01`).
+* **Autoloading :** Fini les `require`, PHP charge les fichiers tout seul grâce aux namespaces `App\`.
+* **Encapsulation :** On protège les données (`protected/private`). On ne change pas l'IP d'un serveur par magie sans passer par le constructeur.
+* **Héritage :** `Serveur` ne réécrit pas la gestion de l'IP, il l'emprunte à `EquipementReseau`.
+
+== 7. Exercice Pratique 1 : Gestion des Imprimantes (30 min)
+
+**Objectif :** Valider la compréhension de l'héritage et de la spécialisation.
+
+**Contexte :**
+Votre parc informatique contient des imprimantes réseaux. Certaines sont Noir & Blanc, d'autres Couleur. L'administrateur veut savoir rapidement le type d'imprimante et son niveau de toner.
+
+**Consignes :**
+
+.   Dans le dossier `src`, créez une classe `Imprimante` qui hérite de `EquipementReseau`.
+.   Ajoutez deux attributs privés spécifiques :
+* `string $type` (ex: "Laser", "Jet d'encre").
+* `bool $estCouleur`.
+.   Créez le constructeur adéquat (n'oubliez pas d'appeler le constructeur parent pour l'IP et le Hostname !).
+.   Redéfinissez la méthode `afficherStatut()` pour qu'elle affiche :
+* _"Équipement : [Hostname] ([IP]) | Type : Laser | Couleur : OUI"_ (ou NON).
+.   Dans `index.php`, instanciez une imprimante "HP-Etage-1" (Laser, Noir & Blanc) et une "Canon-Direction" (Jet d'encre, Couleur) et affichez leurs statuts.
+
+
+== 8. Exercice Pratique 2 : Le Switch et le Monitoring (1h00)
+
+**Objectif :** Réviser les **boucles** (`for`) et les **conditions** (`if/else`) au sein d'une méthode de classe.
+
+**Contexte :**
+Un Switch dispose de plusieurs ports (24 ou 48). Votre outil doit être capable de scanner tous les ports d'un switch pour voir lesquels sont connectés.
+Pour cet exercice, comme nous n'avons pas de vrais câbles, nous allons simuler l'état des ports (aléatoirement).
+
+**Consignes :**
+
+=== Étape A : La Classe Switch
+.   Créez une classe `SwitchReseau` dans `src/` héritant de `EquipementReseau`.
+.   Ajoutez un attribut privé `int $nombrePorts` (par défaut 24).
+.   Dans le constructeur, initialisez cet attribut.
+
+=== Étape B : La méthode de scan (Algorithmique)
+.   Ajoutez une méthode publique `scannerPorts(): void`.
+.   Cette méthode doit contenir une **boucle** qui va de 1 jusqu'au nombre de ports du switch.
+.   **Dans la boucle :**
+* Simulez un état connecté ou non (Astuce : utilisez `rand(0, 1)` où 0 = déconnecté, 1 = connecté).
+* **Condition :**
+** SI le port est connecté : Affichez "Port X : Connecté (Vert)" (en HTML `<span style="color:green">`).
+** SINON : Affichez "Port X : Déconnecté (Rouge)" (en HTML `<span style="color:red">`).
+* Ajoutez un retour à la ligne `<br>` après chaque port.
+
+=== Étape C : Test
+.   Dans `index.php`, créez un Switch "SW-Principal" avec 24 ports.
+.   Appelez la méthode `scannerPorts()` et observez le résultat (rafraîchissez la page pour voir les états changer).
+
+. Beaucoup de choses vues

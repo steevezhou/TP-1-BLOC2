@@ -18,6 +18,15 @@ class Validator
         }
     }
 
+
+    public static function verifieNbPorts(int $nbPorts): void
+    {
+        // Petit rappel de la Séance 2 : Validation !
+        if ($nbPorts < 1 || $nbPorts > 65535) {
+            throw new \Exception("SERVICE : Le port $nbPorts est invalide.");
+        }
+    }
+
     /**
      * Vérifie si une chaîne ressemble à un nom d'hôte.
      * Cette méthode est STATIQUE (mot clé static).
@@ -34,7 +43,7 @@ public static function isPrinterTypeValid(string $type): bool{
 }
 
     public static function isOsSupported(string $os): bool {
-        $listeOS=["Debian 12", "Ubuntu 24.04", "Windows Server 2022", "RedHat 9"];
+        $listeOS=["Debian 12","Debian", "Ubuntu 24.04", "Windows Server 2022", "RedHat 9"];
         return in_array($os,$listeOS);
 }
 }

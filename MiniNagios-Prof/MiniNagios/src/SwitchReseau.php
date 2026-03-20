@@ -30,6 +30,7 @@ class SwitchReseau extends EquipementReseau {
                 echo "<P> Port numéro $compteur :<span style='color:red'>  déconnecté </span></P> " ;
         }
 
+
     }
 
 }
