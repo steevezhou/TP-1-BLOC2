@@ -1,11 +1,25 @@
 <?php
-require '../vendor/autoload.php';
+// On inclut l'autoloader de Composer (s'il fonctionne)
+require_once __DIR__ . '/../vendor/autoload.php';
 
+// ON FORCE l'inclusion manuelle des classes pour éviter l'erreur "Class not found"
+require_once __DIR__ . '/../src/Securite.php';
+require_once __DIR__ . '/../src/Database.php';
+require_once __DIR__ . '/../src/ServeurRepository.php';
+// Si ton repository a besoin de la classe Serveur, décommente la ligne en dessous :
+// require_once __DIR__ . '/../src/Serveur.php';
+
+// 1. Le Gardien du Temple vérifie l'accès
+App\Securite::verifierConnexion();
+
+// 2. Importation des classes
+use MiniNagios\src\Database;
 use MiniNagios\src\ServeurRepository;
 
-$monPDO = \MiniNagios\src\Database::getConnection() ;
-$monRepository = new ServeurRepository($monPDO) ;
-$monTableauServeurs = $monRepository->listerTous() ;
+// 3. Récupération des données pour le dashboard
+$monPDO = Database::getConnection();
+$monRepository = new ServeurRepository($monPDO);
+$monTableauServeurs = $monRepository->ListerTous();
 ?>
 <!DOCTYPE html>
 <html lang="fr">

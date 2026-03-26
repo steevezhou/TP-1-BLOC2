@@ -1,5 +1,6 @@
 <?php
 namespace App;
+namespace MiniNagios\src;
 
 class Database
 {
