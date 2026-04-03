@@ -1,7 +1,7 @@
 <?php
 namespace App ;
-use MiniNagios\src\EquipementReseau;
-use MiniNagios\src\Validator;
+use App\EquipementReseau ;
+use App\Validator ;
 
 class Imprimante extends EquipementReseau {
 

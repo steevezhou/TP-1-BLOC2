@@ -1,7 +1,7 @@
 <?php
 namespace App; // On déclare que cette classe appartient à l'espace de nom "App"
 
-use MiniNagios\src\Validator;
+use App\Validator;
 
 class EquipementReseau
 {

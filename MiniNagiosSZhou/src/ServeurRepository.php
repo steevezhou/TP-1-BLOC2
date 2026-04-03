@@ -1,7 +1,7 @@
 <?php
 namespace App;
 
-use MiniNagios\src\Serveur;
+use App\Serveur;
 
 class ServeurRepository
 {

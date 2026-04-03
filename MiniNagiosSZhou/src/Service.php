@@ -1,7 +1,7 @@
 <?php
 namespace App;
 
-use MiniNagios\src\Validator;
+use App\Validator;
 
 class Service
 {

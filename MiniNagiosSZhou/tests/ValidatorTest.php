@@ -1,7 +1,7 @@
 <?php
 namespace Tests;
 
-use MiniNagios\src\Validator;
+use App\Validator ;
 use PHPUnit\Framework\TestCase;
 
 class ValidatorTest extends TestCase

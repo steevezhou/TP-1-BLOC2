@@ -1,8 +1,8 @@
 <?php
 namespace Tests;
 
-use MiniNagios\src\Serveur;
-use MiniNagios\src\Service;
+use App\Serveur ;
+use App\Service ;
 use PHPUnit\Framework\TestCase;
 use function PHPUnit\Framework\assertEquals;
 

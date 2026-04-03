@@ -1,8 +1,7 @@
 <?php
 namespace App;
 
-use MiniNagios\src\EquipementReseau;
-
+use App\EquipementReseau ;
 class Routeur extends EquipementReseau
 {
     private int $nbPorts;

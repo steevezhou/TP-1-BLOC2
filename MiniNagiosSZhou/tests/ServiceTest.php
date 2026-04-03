@@ -1,7 +1,7 @@
 <?php
 namespace Tests;
 
-use MiniNagios\src\Service;
+use App\Service ;
 use PHPUnit\Framework\TestCase;
 
 class ServiceTest extends TestCase

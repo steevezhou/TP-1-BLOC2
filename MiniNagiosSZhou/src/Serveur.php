@@ -1,10 +1,6 @@
 <?php
 namespace App;
 
-use MiniNagios\src\EquipementReseau;
-use MiniNagios\src\Service;
-use MiniNagios\src\Validator;
-
 class Serveur extends EquipementReseau
 {
     private string $os;

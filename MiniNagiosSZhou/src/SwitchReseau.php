@@ -1,7 +1,7 @@
 <?php
 namespace App ;
 
-use MiniNagios\src\EquipementReseau;
+use App\EquipementReseau;
 
 class SwitchReseau extends EquipementReseau {
     private int $nombrePorts = 24 ;

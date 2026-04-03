@@ -2,7 +2,7 @@
 
 namespace App;
 
-use MiniNagios\src\Routeur;
+use App\Routeur ;
 
 class RouteurRepository
 {
